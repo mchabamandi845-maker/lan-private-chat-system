@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LAN CryptChat - P2P Secure Local Communications</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        code, pre, .font-mono {
+            font-family: 'Fira Code', monospace;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(51, 65, 85, 0.8);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(71, 85, 105, 1);
+        }
+        .pulse-ring {
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            animation: pulse-green 2s infinite;
+        }
+        @keyframes pulse-green {
+            0% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+    </style>
+</head>
+<body class="h-full overflow-hidden flex flex-col bg-slate-950 text-slate-200 antialiased selection:bg-cyan-500 selection:text-slate-900">
+
+    <!-- Top App Header / System Bar -->
+    <header class="h-14 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md flex items-center justify-between px-4 z-20 shrink-0">
+        <div class="flex items-center space-x-3">
+            <div class="bg-cyan-500/10 border border-cyan-500/30 p-2 rounded-lg flex items-center justify-center text-cyan-400">
+                <i data-lucide="shield-check" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="font-bold text-base tracking-wide text-slate-100">LAN CryptChat</h1>
+                    <span class="text-[10px] font-mono bg-cyan-950 text-cyan-400 border border-cyan-800/60 px-1.5 py-0.5 rounded">v2.4-LOCAL</span>
+                </div>
+                <p class="text-xs text-slate-400 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block pulse-ring"></span>
+                    <span>Subnet: <strong class="text-slate-200 font-mono">192.168.1.0/24</strong></span>
+                </p>
+            </div>
+        </div>
+
+        <!-- Center: Simulated Network Stats Bar -->
+        <div class="hidden md:flex items-center gap-6 text-xs bg-slate-950/60 border border-slate-800 px-4 py-1.5 rounded-full font-mono">
+            <div class="flex items-center gap-1.5 text-slate-400">
+                <i data-lucide="wifi" class="w-3.5 h-3.5 text-emerald-400"></i>
+                <span>IP: <strong class="text-emerald-400" id="local-ip-display">192.168.1.104</strong></span>
+            </div>
+            <div class="h-3 w-px bg-slate-800"></div>
+            <div class="flex items-center gap-1.5 text-slate-400">
+                <i data-lucide="activity" class="w-3.5 h-3.5 text-cyan-400"></i>
+                <span>Ping: <strong class="text-slate-200" id="network-ping">2.4 ms</strong></span>
+            </div>
+            <div class="h-3 w-px bg-slate-800"></div>
+            <div class="flex items-center gap-1.5 text-slate-400">
+                <i data-lucide="users" class="w-3.5 h-3.5 text-purple-400"></i>
+                <span>Peers Active: <strong class="text-slate-200" id="active-peers-count">4</strong></span>
+            </div>
+            <div class="h-3 w-px bg-slate-800"></div>
+            <div class="flex items-center gap-1.5 text-slate-400">
+                <i data-lucide="lock" class="w-3.5 h-3.5 text-amber-400"></i>
+                <span>Mode: <strong class="text-amber-400">AES-256 GCM</strong></span>
+            </div>
+        </div>
+
+        <!-- Right: Action Buttons -->
+        <div class="flex items-center gap-2">
+            <button id="btn-open-deploy-guide" class="flex items-center gap-2 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700 transition font-medium">
+                <i data-lucide="terminal" class="w-4 h-4 text-cyan-400"></i>
+                <span>Deploy Script</span>
+            </button>
+            <button id="btn-toggle-inspector" class="flex items-center gap-2 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700 transition font-medium">
+                <i data-lucide="binary" class="w-4 h-4 text-emerald-400"></i>
+                <span>Crypto Inspector</span>
+            </button>
+            <button id="btn-settings-modal" class="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg transition">
+                <i data-lucide="settings" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace Area -->
+    <div class="flex-1 flex overflow-hidden">
+        
+        <!-- Left Sidebar: Nodes & Channels -->
+        <aside class="w-72 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0">
+            <!-- User Profile Quick Card -->
+            <div class="p-3 border-b border-slate-800/80 bg-slate-900/40">
+                <div class="flex items-center justify-between bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                    <div class="flex items-center gap-2.5 overflow-hidden">
+                        <div class="relative">
+                            <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold shadow-md" id="user-avatar">
+                                ME
+                            </div>
+                            <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-slate-950 rounded-full"></span>
+                        </div>
+                        <div class="truncate">
+                            <div class="text-xs font-semibold text-slate-100 truncate" id="user-name-display">Alex (Host Node)</div>
+                            <div class="text-[10px] text-slate-400 font-mono truncate" id="user-mac-display">MAC: 3A:40:9B:11:F2</div>
+                        </div>
+                    </div>
+                    <button id="btn-edit-profile" class="text-slate-400 hover:text-cyan-400 p-1.5 rounded-lg hover:bg-slate-800 transition">
+                        <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Discovery Control & Filter -->
+            <div class="p-3 border-b border-slate-800 flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">LAN Channels</span>
+                <button id="btn-create-channel" class="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 bg-cyan-950/40 border border-cyan-800/40 px-2 py-0.5 rounded hover:bg-cyan-900/40 transition">
+                    <i data-lucide="plus" class="w-3 h-3"></i>
+                    <span>New Room</span>
+                </button>
+            </div>
+
+            <!-- Channels & Rooms List -->
+            <div class="flex-1 overflow-y-auto p-2 space-y-4">
+                <div>
+                    <div class="px-2 pb-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Broadcast Rooms</div>
+                    <div class="space-y-0.5" id="channels-list">
+                        <!-- Populated dynamically by JS -->
+                    </div>
+                </div>
+
+                <div>
+                    <div class="px-2 pb-1 text-[11px] font-semibold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                        <span>Discovered Peers</span>
+                        <button id="btn-rescan-lan" title="Rescan LAN (mDNS)" class="text-slate-400 hover:text-cyan-400 transition">
+                            <i data-lucide="refresh-cw" class="w-3 h-3" id="scan-icon"></i>
+                        </button>
+                    </div>
+                    <div class="space-y-0.5" id="peers-list">
+                        <!-- Populated dynamically by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subnet Status Widget (Bottom Left) -->
+            <div class="p-3 border-t border-slate-800 bg-slate-950/50">
+                <div class="flex items-center justify-between text-xs mb-1.5">
+                    <span class="text-slate-400 font-medium">LAN Peer Discovery</span>
+                    <span class="text-emerald-400 text-[10px] bg-emerald-950 border border-emerald-800 px-1.5 py-0.2 rounded">mDNS Active</span>
+                </div>
+                <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                    <div class="bg-gradient-to-r from-cyan-500 to-emerald-400 h-full w-full animate-pulse"></div>
+                </div>
+                <div class="mt-2 flex items-center justify-between text-[10px] text-slate-500 font-mono">
+                    <span>Multicast 224.0.0.251</span>
+                    <span>UDP 5353</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Central Chat Dashboard Area -->
+        <main class="flex-1 flex flex-col bg-slate-950 relative overflow-hidden">
+            
+            <!-- Chat Room Header -->
+            <div class="h-14 border-b border-slate-800 bg-slate-900/60 px-4 flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-cyan-400" id="room-icon-container">
+                        <i data-lucide="hash" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 class="font-bold text-slate-100 text-sm" id="room-title"># general-lan</h2>
+                            <span id="e2ee-badge" class="flex items-center gap-1 text-[10px] bg-emerald-950/80 text-emerald-400 border border-emerald-800 px-2 py-0.5 rounded-full font-mono">
+                                <i data-lucide="lock" class="w-3 h-3"></i>
+                                <span>E2EE Active</span>
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-400 truncate" id="room-subtitle">Public Subnet Channel • All local peers</p>
+                    </div>
+                </div>
+
+                <!-- Room Action Toolbar -->
+                <div class="flex items-center gap-3">
+                    <!-- Disappearing Messages Dropdown -->
+                    <div class="flex items-center gap-1.5 bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1">
+                        <i data-lucide="clock" class="w-3.5 h-3.5 text-amber-400"></i>
+                        <span class="text-xs text-slate-400 hidden sm:inline">Self-Destruct:</span>
+                        <select id="timer-select" class="bg-transparent text-xs text-slate-200 focus:outline-none font-medium cursor-pointer">
+                            <option value="0" class="bg-slate-900">Off</option>
+                            <option value="5" class="bg-slate-900">5 seconds</option>
+                            <option value="30" class="bg-slate-900">30 seconds</option>
+                            <option value="60" class="bg-slate-900">1 minute</option>
+                        </select>
+                    </div>
+
+                    <!-- Clear Feed -->
+                    <button id="btn-clear-chat" title="Clear View" class="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg transition">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                    <!-- Peer Info / Details toggle -->
+                    <button id="btn-toggle-peer-details" title="Toggle Node Stats" class="p-2 text-slate-400 hover:text-cyan-400 hover:bg-slate-800 rounded-lg transition">
+                        <i data-lucide="info" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Messages Scroll Area -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-4" id="messages-container">
+                <!-- System Banner Notice -->
+                <div class="bg-cyan-950/30 border border-cyan-800/40 rounded-xl p-3 text-xs text-cyan-200/90 flex items-start gap-3 my-2">
+                    <i data-lucide="shield-alert" class="w-5 h-5 text-cyan-400 shrink-0 mt-0.5"></i>
+                    <div>
+                        <p class="font-semibold text-cyan-300">Local Area Peer Mesh Established</p>
+                        <p class="text-cyan-200/70 mt-0.5">All packets are routed locally within your subnet range. No external internet or cloud server is used. Encrypted using ephemeral keys (Diffie-Hellman + AES-256-GCM).</p>
+                    </div>
+                </div>
+
+                <!-- Chat Messages appended dynamically -->
+            </div>
+
+            <!-- Typing Indicator Bar -->
+            <div id="typing-indicator" class="px-4 py-1 text-xs text-slate-400 font-mono hidden items-center gap-2">
+                <div class="flex space-x-1">
+                    <div class="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style="animation-delay: 0s"></div>
+                    <div class="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                    <div class="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+                </div>
+                <span id="typing-text">Peer is typing...</span>
+            </div>
+
+            <!-- Message Input Form Bar -->
+            <div class="p-3 bg-slate-900/90 border-t border-slate-800 relative shrink-0">
+                <!-- Attachment Preview Bar (Hidden by default) -->
+                <div id="attachment-preview-bar" class="hidden mb-2 p-2 bg-slate-950 border border-slate-800 rounded-lg flex items-center justify-between">
+                    <div class="flex items-center gap-2 overflow-hidden">
+                        <i data-lucide="file-text" class="w-4 h-4 text-cyan-400 shrink-0"></i>
+                        <span class="text-xs text-slate-200 truncate font-mono" id="attachment-name">code_snippet.js</span>
+                        <span class="text-[10px] text-slate-500 font-mono" id="attachment-size">(1.2 KB)</span>
+                    </div>
+                    <button id="btn-cancel-attachment" class="text-slate-500 hover:text-rose-400 p-1">
+                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+
+                <form id="chat-form" class="flex items-end gap-2">
+                    <!-- Add Attachment Dropdown / Actions -->
+                    <div class="flex items-center gap-1">
+                        <input type="file" id="file-input" class="hidden" />
+                        <button type="button" id="btn-attach-file" title="Attach LAN File / Image" class="p-2.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-xl transition">
+                            <i data-lucide="paperclip" class="w-5 h-5"></i>
+                        </button>
+                        <button type="button" id="btn-snippet-modal" title="Insert Code Snippet" class="p-2.5 text-slate-400 hover:text-cyan-400 hover:bg-slate-800 rounded-xl transition hidden sm:flex">
+                            <i data-lucide="code" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+
+                    <!-- Input Box -->
+                    <div class="flex-1 bg-slate-950 border border-slate-800 focus-within:border-cyan-500/60 rounded-xl px-3 py-2 transition flex items-center">
+                        <textarea id="message-input" rows="1" placeholder="Type a message or drop file... (Press Enter to send)" class="w-full bg-transparent text-slate-100 placeholder-slate-500 text-sm focus:outline-none resize-none max-h-32"></textarea>
+                    </div>
+
+                    <!-- Send Button -->
+                    <button type="submit" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 p-2.5 rounded-xl font-medium transition shadow-lg shadow-cyan-500/20 flex items-center justify-center shrink-0">
+                        <i data-lucide="send" class="w-5 h-5"></i>
+                    </button>
+                </form>
+            </div>
+        </main>
+
+        <!-- Right Side Panel: Encryption Inspector & Subnet Peer Info -->
+        <aside id="right-panel" class="w-80 bg-slate-900 border-l border-slate-800 flex flex-col shrink-0">
+            <!-- Panel Header Tabs -->
+            <div class="flex border-b border-slate-800 bg-slate-950">
+                <button id="tab-btn-crypto" class="flex-1 py-3 text-xs font-semibold text-cyan-400 border-b-2 border-cyan-400 flex items-center justify-center gap-1.5">
+                    <i data-lucide="binary" class="w-3.5 h-3.5"></i>
+                    <span>Crypto Stream</span>
+                </button>
+                <button id="tab-btn-peer" class="flex-1 py-3 text-xs font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-200 flex items-center justify-center gap-1.5">
+                    <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
+                    <span>Peer Diagnostics</span>
+                </button>
+            </div>
+
+            <!-- Tab Content 1: Live Crypto Stream & Cipher Inspector -->
+            <div id="panel-crypto" class="flex-1 overflow-y-auto p-4 space-y-4">
+                <div>
+                    <h3 class="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <i data-lucide="key" class="w-3.5 h-3.5 text-amber-400"></i>
+                        <span>Session Key Pair</span>
+                    </h3>
+                    <div class="bg-slate-950 border border-slate-800 p-2.5 rounded-xl space-y-2 font-mono text-[11px]">
+                        <div>
+                            <span class="text-slate-500 block text-[10px]">LOCAL PUBLIC KEY (RSA-2048):</span>
+                            <div class="text-cyan-400 truncate select-all bg-slate-900 px-2 py-1 rounded border border-slate-800/80 mt-0.5">
+                                MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3f2X...
+                            </div>
+                        </div>
+                        <div>
+                            <span class="text-slate-500 block text-[10px]">SHARED SYMMETRIC SECRET (AES-GCM):</span>
+                            <div class="text-emerald-400 font-bold truncate bg-slate-900 px-2 py-1 rounded border border-slate-800/80 mt-0.5">
+                                e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <i data-lucide="radio" class="w-3.5 h-3.5 text-cyan-400"></i>
+                        <span>Live Wire Encrypted Frame</span>
+                    </h3>
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 font-mono text-[11px] space-y-2">
+                        <div class="flex justify-between text-slate-500 border-b border-slate-800 pb-1 text-[10px]">
+                            <span>TYPE: UDP DATAGRAM</span>
+                            <span class="text-emerald-400">STATUS: VERIFIED</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-500 block text-[10px]">IV / NONCE (12-byte):</span>
+                            <span class="text-amber-400" id="wire-iv">9f84a120c48e7b</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-500 block text-[10px]">CIPHERTEXT (BASE64):</span>
+                            <p class="text-slate-300 break-all bg-slate-900/90 p-2 rounded border border-slate-800 leading-tight max-h-32 overflow-y-auto" id="wire-ciphertext">
+                                [Waiting for packet transmission...]
+                            </p>
+                        </div>
+                        <div>
+                            <span class="text-slate-500 block text-[10px]">AUTH TAG (16-byte GCM):</span>
+                            <span class="text-purple-400" id="wire-authtag">a73f912e8b41c095d3</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Encryption Toggle controls -->
+                <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-medium text-slate-200">Enforce Encryption</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="toggle-e2ee" class="sr-only peer" checked>
+                            <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-500"></div>
+                        </label>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-1">If disabled, messages are sent unencrypted over local UDP socket stream for debugging.</p>
+                </div>
+            </div>
+
+            <!-- Tab Content 2: Peer Diagnostics -->
+            <div id="panel-peer" class="flex-1 overflow-y-auto p-4 space-y-4 hidden">
+                <div>
+                    <h3 class="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Selected Peer Details</h3>
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2 text-xs">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Node Alias:</span>
+                            <span class="text-slate-100 font-semibold" id="diag-node-name">Sarah_Dev</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">LAN Address:</span>
+                            <span class="text-cyan-400 font-mono" id="diag-node-ip">192.168.1.112</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">MAC Address:</span>
+                            <span class="text-slate-300 font-mono" id="diag-node-mac">70:85:C2:A1:33:04</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Transport Protocol:</span>
+                            <span class="text-purple-400 font-mono">WebRTC / SCTP</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Round Trip Time:</span>
+                            <span class="text-emerald-400 font-mono">1.8 ms</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Subnet Traffic Simulation</h3>
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-3">
+                        <div>
+                            <div class="flex justify-between text-[11px] text-slate-400 mb-1">
+                                <span>TX Bandwidth</span>
+                                <span class="font-mono text-cyan-400">142 KB/s</span>
+                            </div>
+                            <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+                                <div class="bg-cyan-500 h-full w-[45%]"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[11px] text-slate-400 mb-1">
+                                <span>RX Bandwidth</span>
+                                <span class="font-mono text-emerald-400">380 KB/s</span>
+                            </div>
+                            <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+                                <div class="bg-emerald-500 h-full w-[70%]"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+                    <span class="text-xs font-semibold text-slate-300 block mb-1">mDNS Announcement Payload</span>
+                    <pre class="text-[10px] text-slate-400 font-mono bg-slate-900 p-2 rounded border border-slate-800/80 overflow-x-auto">
+{
+  "service": "_cryptchat._tcp.local",
+  "port": 8443,
+  "txt": {
+    "ver": "2.4",
+    "pk": "0x4A8F...99B"
+  }
+}</pre>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Modal 1: Deployment & Real LAN Setup Guide -->
+    <div id="modal-deploy" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+            <!-- Modal Header -->
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950">
+                <div class="flex items-center gap-2.5">
+                    <div class="p-2 bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 rounded-lg">
+                        <i data-lucide="terminal" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-100 text-base">Real LAN Deployment & Code Starter Guides</h3>
+                        <p class="text-xs text-slate-400">Run secure zero-config P2P chats on your local home or office network</p>
+                    </div>
+                </div>
+                <button class="close-modal p-2 text-slate-400 hover:text-slate-100 hover:bg-slate-800 rounded-lg transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content (Tabs + Code Viewers) -->
+            <div class="flex-1 overflow-y-auto p-6 space-y-6">
+                <!-- Stack Selection Tabs -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <button class="deploy-tab-btn px-3 py-2 text-xs font-medium rounded-xl border border-cyan-500/50 bg-cyan-950/40 text-cyan-400 flex items-center justify-center gap-2" data-target="guide-webrtc">
+                        <i data-lucide="globe" class="w-4 h-4"></i>
+                        <span>WebRTC / Browser</span>
+                    </button>
+                    <button class="deploy-tab-btn px-3 py-2 text-xs font-medium rounded-xl border border-slate-800 bg-slate-950 text-slate-400 hover:text-slate-200 flex items-center justify-center gap-2" data-target="guide-node">
+                        <i data-lucide="server" class="w-4 h-4"></i>
+                        <span>Node.js WebSocket</span>
+                    </button>
+                    <button class="deploy-tab-btn px-3 py-2 text-xs font-medium rounded-xl border border-slate-800 bg-slate-950 text-slate-400 hover:text-slate-200 flex items-center justify-center gap-2" data-target="guide-python">
+                        <i data-lucide="file-code" class="w-4 h-4"></i>
+                        <span>Python UDP Socket</span>
+                    </button>
+                    <button class="deploy-tab-btn px-3 py-2 text-xs font-medium rounded-xl border border-slate-800 bg-slate-950 text-slate-400 hover:text-slate-200 flex items-center justify-center gap-2" data-target="guide-go">
+                        <i data-lucide="cpu" class="w-4 h-4"></i>
+                        <span>Go Libp2p / mDNS</span>
+                    </button>
+                </div>
+
+                <!-- Tab 1: WebRTC / Browser BroadcastChannel -->
+                <div id="guide-webrtc" class="deploy-guide-content space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-sm font-semibold text-slate-200">Zero Server: HTML5 BroadcastChannel & PeerJS on Subnet</h4>
+                        <span class="text-xs font-mono text-cyan-400 bg-cyan-950 px-2 py-0.5 rounded border border-cyan-800">HTML + JS</span>
+                    </div>
+                    <p class="text-xs text-slate-400">For instant same-browser or local web server deployment without installing backends:</p>
+                    <pre class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs font-mono text-slate-300 overflow-x-auto relative group">
+<code class="language-js">// Instant LAN Chat using Web BroadcastChannel API
+const channel = new BroadcastChannel('lan_private_chat');
+
+// Listen for incoming LAN messages from other browser tabs / windows on network
+channel.onmessage = (event) => {
+    const { sender, payload, signature } = event.data;
+    console.log(`[LAN RX] ${sender}:`, payload);
+    renderMessage(sender, payload);
+};
+
+// Send message to all peers on the same origin / local web server
+function sendLanMessage(text) {
+    const packet = {
+        sender: 'Alex-192.168.1.104',
+        payload: text,
+        timestamp: Date.now()
+    };
+    channel.postMessage(packet);
+}</code></pre>
+                </div>
+
+                <!-- Tab 2: Node.js WebSocket Server -->
+                <div id="guide-node" class="deploy-guide-content space-y-3 hidden">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-sm font-semibold text-slate-200">Node.js Zero-Dependency Local Broadcast Server</h4>
+                        <span class="text-xs font-mono text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">server.js</span>
+                    </div>
+                    <p class="text-xs text-slate-400">Run this script on any computer on your Wi-Fi/Ethernet router to create a central LAN server hub:</p>
+                    <pre class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs font-mono text-slate-300 overflow-x-auto">
+<code class="language-js">// Save as lan_server.js -> Run: node lan_server.js
+const { WebSocketServer } = require('ws');
+const wss = new WebSocketServer({ port: 8080 });
+
+console.log('⚡ LAN Chat Hub listening on ws://0.0.0.0:8080');
+
+wss.on('connection', (ws, req) => {
+    const clientIp = req.socket.remoteAddress;
+    console.log(`[+] Peer connected from LAN IP: ${clientIp}`);
+
+    ws.on('message', (message) => {
+        // Broadcast packet to all connected LAN peers
+        wss.clients.forEach(client => {
+            if (client.readyState === 1) {
+                client.send(message.toString());
+            }
+        });
+    });
+});</code></pre>
+                </div>
+
+                <!-- Tab 3: Python UDP Sockets -->
+                <div id="guide-python" class="deploy-guide-content space-y-3 hidden">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-sm font-semibold text-slate-200">Python UDP Peer-to-Peer Multicast Discovery</h4>
+                        <span class="text-xs font-mono text-amber-400 bg-amber-950 px-2 py-0.5 rounded border border-amber-800">peer.py</span>
+                    </div>
+                    <p class="text-xs text-slate-400">Pure peer-to-peer UDP broadcast script. No central server needed!</p>
+                    <pre class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs font-mono text-slate-300 overflow-x-auto">
+<code class="language-python"># Save as peer.py -> Run: python3 peer.py
+import socket
+import threading
+
+PORT = 5005
+BROADCAST_IP = '255.255.255.255'
+
+# Receiver Thread
+def listen():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.bind(('', PORT))
+    while True:
+        data, addr = sock.recvfrom(1024)
+        print(f"\n[Packet from {addr[0]}]: {data.decode('utf-8')}\n> ", end="")
+
+threading.Thread(target=listen, daemon=True).start()
+
+# Sender Loop
+sender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+sender.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+
+while True:
+    msg = input("> ")
+    sender.sendto(msg.encode('utf-8'), (BROADCAST_IP, PORT))</code></pre>
+                </div>
+
+                <!-- Tab 4: Go libp2p -->
+                <div id="guide-go" class="deploy-guide-content space-y-3 hidden">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-sm font-semibold text-slate-200">Go Libp2p with mDNS Auto-Discovery</h4>
+                        <span class="text-xs font-mono text-purple-400 bg-purple-950 px-2 py-0.5 rounded border border-purple-800">main.go</span>
+                    </div>
+                    <p class="text-xs text-slate-400">Enterprise-grade encrypted p2p networking with automatic LAN local peer discovery:</p>
+                    <pre class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs font-mono text-slate-300 overflow-x-auto">
+<code class="language-go">package main
+
+import (
+    "context"
+    "fmt"
+    "github.com/libp2p/go-libp2p"
+    "github.com/libp2p/go-libp2p/p2p/discovery/mdns"
+)
+
+type discoveryNotifee struct{}
+func (n *discoveryNotifee) HandlePeerFound(pi peer.AddrInfo) {
+    fmt.Printf("[+] Discovered LAN Peer: %s\n", pi.ID.String())
+}
+
+func main() {
+    host, _ := libp2p.New(libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/0"))
+    fmt.Printf("Node running on ID: %s\n", host.ID())
+
+    // Setup mDNS Service for local LAN discovery
+    ser := mdns.NewMdnsService(host, "cryptchat-lan", &discoveryNotifee{})
+    ser.Start()
+
+    select {} // Keep running
+}</code></pre>
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-slate-800 bg-slate-950 flex justify-end">
+                <button class="close-modal bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2 rounded-xl text-xs font-medium transition">
+                    Done Reading
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 2: Create Custom Room Modal -->
+    <div id="modal-create-room" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-slate-100 text-sm">Create LAN Broadcast Room</h3>
+                <button class="close-modal text-slate-400 hover:text-slate-100"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Room Name</label>
+                    <input type="text" id="new-room-name" placeholder="e.g. dev-team, ops-room" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Security Level</label>
+                    <select id="new-room-security" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500">
+                        <option value="e2ee">Encrypted (AES-256 GCM Multicast)</option>
+                        <option value="cleartext">Unencrypted (Local Debugging)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2">
+                <button class="close-modal bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-xl text-xs font-medium">Cancel</button>
+                <button id="btn-submit-create-room" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-4 py-2 rounded-xl text-xs font-semibold">Create Room</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 3: Code Snippet Creator -->
+    <div id="modal-code-snippet" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-5 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-slate-100 text-sm flex items-center gap-2">
+                    <i data-lucide="code" class="w-4 h-4 text-cyan-400"></i>
+                    <span>Share Code Snippet over LAN</span>
+                </h3>
+                <button class="close-modal text-slate-400 hover:text-slate-100"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Language</label>
+                    <select id="snippet-lang" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500 font-mono">
+                        <option value="javascript">JavaScript / TypeScript</option>
+                        <option value="python">Python</option>
+                        <option value="html">HTML / Markup</option>
+                        <option value="json">JSON</option>
+                        <option value="bash">Bash / Shell</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Source Code</label>
+                    <textarea id="snippet-code" rows="6" placeholder="Paste your code here..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500 resize-none"></textarea>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2">
+                <button class="close-modal bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-xl text-xs font-medium">Cancel</button>
+                <button id="btn-submit-snippet" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-4 py-2 rounded-xl text-xs font-semibold">Send Code Packet</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application JavaScript Logic -->
+    <script>
+        // State Management
+        const state = {
+            currentUser: {
+                name: 'Alex (Host Node)',
+                ip: '192.168.1.104',
+                mac: '3A:40:9B:11:F2',
+                avatar: 'ME'
+            },
+            currentChatId: 'general',
+            currentChatType: 'channel', // 'channel' or 'peer'
+            disappearingTimer: 0, // 0 = off, else seconds
+            e2eeEnabled: true,
+            
+            channels: [
+                { id: 'general', name: 'general-lan', unread: 0, desc: 'Public Subnet Channel • All local peers' },
+                { id: 'dev-ops', name: 'dev-ops', unread: 2, desc: 'Internal Infrastructure & Deployments' },
+                { id: 'announcements', name: 'announcements', unread: 0, desc: 'Network Admin Alerts' }
+            ],
+
+            peers: [
+                { id: 'peer-1', name: 'Sarah_Dev', ip: '192.168.1.112', mac: '70:85:C2:A1:33:04', status: 'online', avatar: 'SD', color: 'from-purple-500 to-indigo-600', replyDelay: 2500 },
+                { id: 'peer-2', name: 'Marcus_Sec', ip: '192.168.1.145', mac: '94:E6:F7:22:B8:10', status: 'online', avatar: 'MS', color: 'from-amber-500 to-orange-600', replyDelay: 3500 },
+                { id: 'peer-3', name: 'Elena_QA', ip: '192.168.1.190', mac: 'B2:11:44:89:C5:D1', status: 'idle', avatar: 'EQ', color: 'from-emerald-500 to-teal-600', replyDelay: 4000 }
+            ],
+
+            messages: {
+                'general': [
+                    { id: 'm1', sender: 'Sarah_Dev', senderIp: '192.168.1.112', text: 'Hey everyone, just connected to the LAN chat node!', timestamp: '09:30 AM', type: 'text' },
+                    { id: 'm2', sender: 'Marcus_Sec', senderIp: '192.168.1.145', text: 'E2EE handshake confirmed via mDNS UDP broadcast. Looking smooth.', timestamp: '09:32 AM', type: 'text' }
+                ],
+                'dev-ops': [
+                    { id: 'm3', sender: 'Sarah_Dev', senderIp: '192.168.1.112', text: 'Did someone update the local staging router configs?', timestamp: '08:45 AM', type: 'text' }
+                ],
+                'peer-1': [
+                    { id: 'm4', sender: 'Sarah_Dev', senderIp: '192.168.1.112', text: 'Direct P2P pipe opened. This room is end-to-end encrypted for just us.', timestamp: '09:15 AM', type: 'text' }
+                ]
+            },
+
+            stagedAttachment: null
+        };
+
+        // DOM Element Cache
+        const elements = {
+            channelsList: document.getElementById('channels-list'),
+            peersList: document.getElementById('peers-list'),
+            messagesContainer: document.getElementById('messages-container'),
+            chatForm: document.getElementById('chat-form'),
+            messageInput: document.getElementById('message-input'),
+            roomTitle: document.getElementById('room-title'),
+            roomSubtitle: document.getElementById('room-subtitle'),
+            roomIconContainer: document.getElementById('room-icon-container'),
+            e2eeBadge: document.getElementById('e2ee-badge'),
+            typingIndicator: document.getElementById('typing-indicator'),
+            typingText: document.getElementById('typing-text'),
+            timerSelect: document.getElementById('timer-select'),
+            wireIv: document.getElementById('wire-iv'),
+            wireCiphertext: document.getElementById('wire-ciphertext'),
+            wireAuthtag: document.getElementById('wire-authtag'),
+            toggleE2ee: document.getElementById('toggle-e2ee'),
+            activePeersCount: document.getElementById('active-peers-count'),
+            networkPing: document.getElementById('network-ping'),
+            scanIcon: document.getElementById('scan-icon'),
+            btnRescan: document.getElementById('btn-rescan-lan'),
+            // Panel tabs
+            tabCrypto: document.getElementById('tab-btn-crypto'),
+            tabPeer: document.getElementById('tab-btn-peer'),
+            panelCrypto: document.getElementById('panel-crypto'),
+            panelPeer: document.getElementById('panel-peer'),
+            diagNodeName: document.getElementById('diag-node-name'),
+            diagNodeIp: document.getElementById('diag-node-ip'),
+            diagNodeMac: document.getElementById('diag-node-mac'),
+            // Attachments
+            btnAttachFile: document.getElementById('btn-attach-file'),
+            fileInput: document.getElementById('file-input'),
+            attachmentPreviewBar: document.getElementById('attachment-preview-bar'),
+            attachmentName: document.getElementById('attachment-name'),
+            attachmentSize: document.getElementById('attachment-size'),
+            btnCancelAttachment: document.getElementById('btn-cancel-attachment'),
+            // Modals
+            modalDeploy: document.getElementById('modal-deploy'),
+            btnOpenDeployGuide: document.getElementById('btn-open-deploy-guide'),
+            modalCreateRoom: document.getElementById('modal-create-room'),
+            btnCreateChannel: document.getElementById('btn-create-channel'),
+            btnSubmitCreateRoom: document.getElementById('btn-submit-create-room'),
+            newRoomName: document.getElementById('new-room-name'),
+            modalCodeSnippet: document.getElementById('modal-code-snippet'),
+            btnSnippetModal: document.getElementById('btn-snippet-modal'),
+            btnSubmitSnippet: document.getElementById('btn-submit-snippet'),
+            snippetCode: document.getElementById('snippet-code'),
+            snippetLang: document.getElementById('snippet-lang'),
+            btnClearChat: document.getElementById('btn-clear-chat')
+        };
+
+        // Initialize Lucide Icons
+        function initIcons() {
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
+        }
+
+        // Render Channels Sidebar List
+        function renderChannels() {
+            elements.channelsList.innerHTML = '';
+            state.channels.forEach(ch => {
+                const isActive = state.currentChatId === ch.id && state.currentChatType === 'channel';
+                const el = document.createElement('button');
+                el.className = `w-full px-3 py-2 rounded-xl text-left flex items-center justify-between group transition ${
+                    isActive ? 'bg-cyan-500/10 text-cyan-300 font-semibold border border-cyan-500/20' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+                }`;
+                el.onclick = () => selectChat(ch.id, 'channel');
+                el.innerHTML = `
+                    <div class="flex items-center gap-2 truncate">
+                        <i data-lucide="hash" class="w-4 h-4 shrink-0 ${isActive ? 'text-cyan-400' : 'text-slate-500 group-hover:text-slate-300'}"></i>
+                        <span class="text-xs truncate">${ch.name}</span>
+                    </div>
+                    ${ch.unread > 0 ? `<span class="bg-cyan-500 text-slate-950 font-bold text-[10px] px-1.5 py-0.2 rounded-full">${ch.unread}</span>` : ''}
+                `;
+                elements.channelsList.appendChild(el);
+            });
+            initIcons();
+        }
+
+        // Render Discovered Peers Sidebar List
+        function renderPeers() {
+            elements.peersList.innerHTML = '';
+            state.peers.forEach(peer => {
+                const isActive = state.currentChatId === peer.id && state.currentChatType === 'peer';
+                const el = document.createElement('button');
+                el.className = `w-full px-3 py-2 rounded-xl text-left flex items-center justify-between group transition ${
+                    isActive ? 'bg-cyan-500/10 text-cyan-300 font-semibold border border-cyan-500/20' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+                }`;
+                el.onclick = () => selectChat(peer.id, 'peer');
+                
+                const statusBg = peer.status === 'online' ? 'bg-emerald-500' : 'bg-amber-500';
+
+                el.innerHTML = `
+                    <div class="flex items-center gap-2.5 truncate">
+                        <div class="relative shrink-0">
+                            <div class="w-7 h-7 rounded-lg bg-gradient-to-br ${peer.color} flex items-center justify-center text-white text-xs font-bold">
+                                ${peer.avatar}
+                            </div>
+                            <span class="absolute -bottom-0.5 -right-0.5 w-2 h-2 ${statusBg} border border-slate-900 rounded-full"></span>
+                        </div>
+                        <div class="truncate">
+                            <div class="text-xs text-slate-200 truncate font-medium">${peer.name}</div>
+                            <div class="text-[10px] font-mono text-slate-500 truncate">${peer.ip}</div>
+                        </div>
+                    </div>
+                    <i data-lucide="lock" class="w-3 h-3 text-slate-600 group-hover:text-cyan-400"></i>
+                `;
+                elements.peersList.appendChild(el);
+            });
+            initIcons();
+        }
+
+        // Select Active Room or Peer Chat
+        function selectChat(id, type) {
+            state.currentChatId = id;
+            state.currentChatType = type;
+
+            if (type === 'channel') {
+                const ch = state.channels.find(c => c.id === id);
+                if (ch) {
+                    ch.unread = 0;
+                    elements.roomTitle.textContent = `# ${ch.name}`;
+                    elements.roomSubtitle.textContent = ch.desc;
+                    elements.roomIconContainer.innerHTML = `<i data-lucide="hash" class="w-5 h-5 text-cyan-400"></i>`;
+                }
+            } else {
+                const peer = state.peers.find(p => p.id === id);
+                if (peer) {
+                    elements.roomTitle.textContent = `@ ${peer.name}`;
+                    elements.roomSubtitle.textContent = `Direct P2P Link • ${peer.ip} (${peer.mac})`;
+                    elements.roomIconContainer.innerHTML = `<i data-lucide="user-check" class="w-5 h-5 text-emerald-400"></i>`;
+                    
+                    // Update diagnostics view
+                    elements.diagNodeName.textContent = peer.name;
+                    elements.diagNodeIp.textContent = peer.ip;
+                    elements.diagNodeMac.textContent = peer.mac;
+                }
+            }
+
+            renderChannels();
+            renderPeers();
+            renderMessages();
+        }
+
+        // Render Chat Feed Messages
+        function renderMessages() {
+            elements.messagesContainer.innerHTML = '';
+            
+            // System Subnet Banner
+            const banner = document.createElement('div');
+            banner.className = 'bg-cyan-950/20 border border-cyan-800/30 rounded-xl p-3 text-xs text-cyan-200/90 flex items-start gap-3 my-2';
+            banner.innerHTML = `
+                <i data-lucide="shield-check" class="w-5 h-5 text-cyan-400 shrink-0 mt-0.5"></i>
+                <div>
+                    <p class="font-semibold text-cyan-300">Local Area Peer Mesh Active</p>
+                    <p class="text-cyan-200/70 mt-0.5">Direct socket communication enabled on LAN. Messages are protected by E2EE encryption.</p>
+                </div>
+            `;
+            elements.messagesContainer.appendChild(banner);
+
+            const activeMsgs = state.messages[state.currentChatId] || [];
+
+            activeMsgs.forEach(msg => {
+                const isMe = msg.sender === state.currentUser.name;
+                const msgEl = document.createElement('div');
+                msgEl.className = `flex gap-3 text-xs ${isMe ? 'justify-end' : 'justify-start'}`;
+
+                let contentHtml = '';
+
+                if (msg.type === 'text') {
+                    contentHtml = `<p class="leading-relaxed break-words">${escapeHtml(msg.text)}</p>`;
+                } else if (msg.type === 'snippet') {
+                    contentHtml = `
+                        <div class="space-y-1 font-mono">
+                            <div class="flex items-center justify-between text-[10px] text-cyan-400 border-b border-slate-800 pb-1 mb-1">
+                                <span>CODE SNIPPET (${msg.lang})</span>
+                                <i data-lucide="code" class="w-3 h-3"></i>
+                            </div>
+                            <pre class="bg-slate-950 p-2.5 rounded border border-slate-800 text-[11px] text-cyan-200 overflow-x-auto"><code>${escapeHtml(msg.text)}</code></pre>
+                        </div>
+                    `;
+                } else if (msg.type === 'file') {
+                    contentHtml = `
+                        <div class="flex items-center gap-3 bg-slate-950 p-2.5 rounded-lg border border-slate-800 font-mono">
+                            <i data-lucide="file-text" class="w-6 h-6 text-cyan-400 shrink-0"></i>
+                            <div class="truncate">
+                                <div class="font-semibold text-slate-200 truncate">${escapeHtml(msg.fileName)}</div>
+                                <div class="text-[10px] text-slate-400">${msg.fileSize} • LAN Shared</div>
+                            </div>
+                            <button onclick="simDownload('${escapeHtml(msg.fileName)}')" class="bg-slate-800 hover:bg-slate-700 text-cyan-400 p-1.5 rounded transition">
+                                <i data-lucide="download" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    `;
+                }
+
+                msgEl.innerHTML = `
+                    ${!isMe ? `<div class="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-cyan-400 text-xs shrink-0">${msg.sender.substring(0,2).toUpperCase()}</div>` : ''}
+                    <div class="max-w-[75%] space-y-1">
+                        <div class="flex items-center gap-2 ${isMe ? 'justify-end' : 'justify-start'} text-[10px] text-slate-400 font-mono">
+                            <span class="font-semibold text-slate-300">${msg.sender}</span>
+                            <span>[${msg.senderIp}]</span>
+                            <span>${msg.timestamp}</span>
+                            ${msg.destructTimer ? `<span class="text-amber-400 flex items-center gap-0.5"><i data-lucide="clock" class="w-2.5 h-2.5"></i> ${msg.destructTimer}s</span>` : ''}
+                        </div>
+                        <div class="${isMe ? 'bg-cyan-600 text-white rounded-2xl rounded-tr-none' : 'bg-slate-900 text-slate-100 border border-slate-800 rounded-2xl rounded-tl-none'} p-3 shadow-md">
+                            ${contentHtml}
+                        </div>
+                    </div>
+                `;
+
+                elements.messagesContainer.appendChild(msgEl);
+            });
+
+            // Auto scroll to bottom
+            elements.messagesContainer.scrollTop = elements.messagesContainer.scrollHeight;
+            initIcons();
+        }
+
+        // Send Message Function
+        function sendMessage(text, type = 'text', extraData = {}) {
+            if (!text.trim() && !state.stagedAttachment && type === 'text') return;
+
+            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            let newMsg = {
+                id: 'm_' + Date.now(),
+                sender: state.currentUser.name,
+                senderIp: state.currentUser.ip,
+                text: text,
+                timestamp: timeStr,
+                type: type,
+                destructTimer: state.disappearingTimer > 0 ? state.disappearingTimer : null,
+                ...extraData
+            };
+
+            if (state.stagedAttachment) {
+                newMsg.type = 'file';
+                newMsg.fileName = state.stagedAttachment.name;
+                newMsg.fileSize = (state.stagedAttachment.size / 1024).toFixed(1) + ' KB';
+                clearAttachment();
+            }
+
+            if (!state.messages[state.currentChatId]) {
+                state.messages[state.currentChatId] = [];
+            }
+
+            state.messages[state.currentChatId].push(newMsg);
+            renderMessages();
+            elements.messageInput.value = '';
+
+            // Update Wire Cipher Inspector
+            updateCryptoInspector(text || 'FILE_ATTACHMENT_PACKET');
+
+            // Handle Self Destructing Message Timer
+            if (newMsg.destructTimer) {
+                setTimeout(() => {
+                    const list = state.messages[state.currentChatId];
+                    const idx = list.findIndex(m => m.id === newMsg.id);
+                    if (idx !== -1) {
+                        list.splice(idx, 1);
+                        renderMessages();
+                    }
+                }, newMsg.destructTimer * 1000);
+            }
+
+            // Simulate Peer Response if sending direct message or in channel
+            simulatePeerResponse(text);
+        }
+
+        // Dynamic Peer Reply Simulation
+        function simulatePeerResponse(userText) {
+            if (state.currentChatType === 'peer') {
+                const peer = state.peers.find(p => p.id === state.currentChatId);
+                if (!peer) return;
+
+                // Show typing indicator
+                setTimeout(() => {
+                    elements.typingIndicator.classList.remove('hidden');
+                    elements.typingIndicator.classList.add('flex');
+                    elements.typingText.textContent = `${peer.name} is typing encrypted payload...`;
+                }, 800);
+
+                setTimeout(() => {
+                    elements.typingIndicator.classList.add('hidden');
+                    elements.typingIndicator.classList.remove('flex');
+
+                    const responses = [
+                        `Received message over LAN. Latency is ${Math.floor(Math.random() * 3 + 1)}ms.`,
+                        `Packet verified with RSA public key. Let me process this code.`,
+                        `Got it! Transferring local files via P2P web socket now.`,
+                        `LAN connection stable at 1000 Mbps Gigabit connection.`
+                    ];
+                    const randomReply = responses[Math.floor(Math.random() * responses.length)];
+                    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                    state.messages[peer.id].push({
+                        id: 'm_' + Date.now(),
+                        sender: peer.name,
+                        senderIp: peer.ip,
+                        text: randomReply,
+                        timestamp: timeStr,
+                        type: 'text'
+                    });
+
+                    if (state.currentChatId === peer.id) {
+                        renderMessages();
+                        updateCryptoInspector(randomReply);
+                    }
+                }, peer.replyDelay);
+            }
+        }
+
+        // Live Crypto Stream Inspector Updater
+        function updateCryptoInspector(rawText) {
+            // Generate pseudo random IV and Auth Tag
+            const hex = '0123456789abcdef';
+            let iv = '';
+            let authtag = '';
+            for (let i = 0; i < 14; i++) iv += hex[Math.floor(Math.random() * 16)];
+            for (let i = 0; i < 18; i++) authtag += hex[Math.floor(Math.random() * 16)];
+
+            // Encrypt string simulation
+            const b64 = btoa(unescape(encodeURIComponent(rawText))) + '==';
+            const ciphertext = 'AES_GCM:' + b64.split('').reverse().join('');
+
+            elements.wireIv.textContent = iv;
+            elements.wireAuthtag.textContent = authtag;
+            elements.wireCiphertext.textContent = state.e2eeEnabled ? ciphertext : `[UNENCRYPTED_TEXT]: ${rawText}`;
+        }
+
+        // Helper: Clear File Staging
+        function clearAttachment() {
+            state.stagedAttachment = null;
+            elements.attachmentPreviewBar.classList.add('hidden');
+            elements.fileInput.value = '';
+        }
+
+        // Helper: Escape HTML
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;")
+                       .replace(/</g, "&lt;")
+                       .replace(/>/g, "&gt;")
+                       .replace(/"/g, "&quot;")
+                       .replace(/'/g, "&#039;");
+        }
+
+        // File download simulation
+        window.simDownload = function(filename) {
+            alert(`[LAN Simulator] File "${filename}" downloaded directly from peer local storage.`);
+        };
+
+        // Event Listeners Initialization
+        function initEvents() {
+            // Form Submit
+            elements.chatForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                sendMessage(elements.messageInput.value);
+            });
+
+            // Enter key handling (Shift+Enter for new line)
+            elements.messageInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage(elements.messageInput.value);
+                }
+            });
+
+            // Disappearing Timer Select
+            elements.timerSelect.addEventListener('change', (e) => {
+                state.disappearingTimer = parseInt(e.target.value, 10);
+            });
+
+            // Toggle Encryption Enforce
+            elements.toggleE2ee.addEventListener('change', (e) => {
+                state.e2eeEnabled = e.target.checked;
+                elements.e2eeBadge.className = state.e2eeEnabled 
+                    ? 'flex items-center gap-1 text-[10px] bg-emerald-950/80 text-emerald-400 border border-emerald-800 px-2 py-0.5 rounded-full font-mono'
+                    : 'flex items-center gap-1 text-[10px] bg-rose-950/80 text-rose-400 border border-rose-800 px-2 py-0.5 rounded-full font-mono';
+                elements.e2eeBadge.innerHTML = state.e2eeEnabled 
+                    ? `<i data-lucide="lock" class="w-3 h-3"></i><span>E2EE Active</span>`
+                    : `<i data-lucide="unlock" class="w-3 h-3"></i><span>Cleartext</span>`;
+                initIcons();
+            });
+
+            // Rescan LAN simulation
+            elements.btnRescan.addEventListener('click', () => {
+                elements.scanIcon.classList.add('animate-spin');
+                setTimeout(() => {
+                    elements.scanIcon.classList.remove('animate-spin');
+                    // Random ping update
+                    elements.networkPing.textContent = (Math.random() * 2 + 1).toFixed(1) + ' ms';
+                }, 1000);
+            });
+
+            // File Attachment UI
+            elements.btnAttachFile.addEventListener('click', () => elements.fileInput.click());
+            elements.fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    const file = e.target.files[0];
+                    state.stagedAttachment = file;
+                    elements.attachmentName.textContent = file.name;
+                    elements.attachmentSize.textContent = `(${(file.size / 1024).toFixed(1)} KB)`;
+                    elements.attachmentPreviewBar.classList.remove('hidden');
+                }
+            });
+            elements.btnCancelAttachment.addEventListener('click', clearAttachment);
+
+            // Side Panel Tabs Switcher
+            elements.tabCrypto.addEventListener('click', () => {
+                elements.panelCrypto.classList.remove('hidden');
+                elements.panelPeer.classList.add('hidden');
+                elements.tabCrypto.className = 'flex-1 py-3 text-xs font-semibold text-cyan-400 border-b-2 border-cyan-400 flex items-center justify-center gap-1.5';
+                elements.tabPeer.className = 'flex-1 py-3 text-xs font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-200 flex items-center justify-center gap-1.5';
+            });
+            elements.tabPeer.addEventListener('click', () => {
+                elements.panelPeer.classList.remove('hidden');
+                elements.panelCrypto.classList.add('hidden');
+                elements.tabPeer.className = 'flex-1 py-3 text-xs font-semibold text-cyan-400 border-b-2 border-cyan-400 flex items-center justify-center gap-1.5';
+                elements.tabCrypto.className = 'flex-1 py-3 text-xs font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-200 flex items-center justify-center gap-1.5';
+            });
+
+            // Modals Controls
+            elements.btnOpenDeployGuide.addEventListener('click', () => elements.modalDeploy.classList.remove('hidden'));
+            elements.btnCreateChannel.addEventListener('click', () => elements.modalCreateRoom.classList.remove('hidden'));
+            elements.btnSnippetModal.addEventListener('click', () => elements.modalCodeSnippet.classList.remove('hidden'));
+            elements.btnClearChat.addEventListener('click', () => {
+                state.messages[state.currentChatId] = [];
+                renderMessages();
+            });
+
+            // Close buttons for modals
+            document.querySelectorAll('.close-modal').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    elements.modalDeploy.classList.add('hidden');
+                    elements.modalCreateRoom.classList.add('hidden');
+                    elements.modalCodeSnippet.classList.add('hidden');
+                });
+            });
+
+            // Deploy guide tabs logic
+            document.querySelectorAll('.deploy-tab-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const targetId = btn.getAttribute('data-target');
+                    document.querySelectorAll('.deploy-guide-content').forEach(c => c.classList.add('hidden'));
+                    document.getElementById(targetId).classList.remove('hidden');
+                    
+                    document.querySelectorAll('.deploy-tab-btn').forEach(b => {
+                        b.className = 'deploy-tab-btn px-3 py-2 text-xs font-medium rounded-xl border border-slate-800 bg-slate-950 text-slate-400 hover:text-slate-200 flex items-center justify-center gap-2';
+                    });
+                    btn.className = 'deploy-tab-btn px-3 py-2 text-xs font-medium rounded-xl border border-cyan-500/50 bg-cyan-950/40 text-cyan-400 flex items-center justify-center gap-2';
+                });
+            });
+
+            // Submit New Room
+            elements.btnSubmitCreateRoom.addEventListener('click', () => {
+                const name = elements.newRoomName.value.trim().toLowerCase().replace(/\s+/g, '-');
+                if (name) {
+                    const newId = 'ch_' + Date.now();
+                    state.channels.push({
+                        id: newId,
+                        name: name,
+                        unread: 0,
+                        desc: 'Custom local LAN channel'
+                    });
+                    state.messages[newId] = [];
+                    renderChannels();
+                    selectChat(newId, 'channel');
+                    elements.newRoomName.value = '';
+                    elements.modalCreateRoom.classList.add('hidden');
+                }
+            });
+
+            // Submit Code Snippet
+            elements.btnSubmitSnippet.addEventListener('click', () => {
+                const code = elements.snippetCode.value;
+                const lang = elements.snippetLang.value;
+                if (code.trim()) {
+                    sendMessage(code, 'snippet', { lang: lang });
+                    elements.snippetCode.value = '';
+                    elements.modalCodeSnippet.classList.add('hidden');
+                }
+            });
+        }
+
+        // Window Load Handler
+        window.onload = function() {
+            renderChannels();
+            renderPeers();
+            selectChat('general', 'channel');
+            initEvents();
+            initIcons();
+        };
+    </script>
+</body>
+</html>
